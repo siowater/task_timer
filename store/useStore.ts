@@ -121,7 +121,12 @@ export const useStore = create<AppState>()(
           };
           return { tasks: [...state.tasks, newTask] };
         }),
-      deleteTask: () => {},
+      deleteTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.filter((t) => t.id !== id),
+          sessionLogs: state.sessionLogs.filter((log) => log.taskId !== id),
+          activeTimers: state.activeTimers.filter((t) => t.taskId !== id),
+        })),
       archiveTask: () => {},
       restoreTask: () => {},
       reorderTask: () => {},
