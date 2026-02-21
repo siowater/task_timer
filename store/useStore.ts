@@ -150,7 +150,27 @@ export const useStore = create<AppState>()(
             ),
           };
         }),
-      reorderTask: () => {},
+      reorderTask: (id, newOrder) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === id);
+          if (!task) return state;
+          const siblings = state.tasks
+            .filter((t) => t.parentId === task.parentId)
+            .sort((a, b) => a.order - b.order);
+          const fromIndex = siblings.findIndex((t) => t.id === id);
+          if (fromIndex < 0) return state;
+          const toIndex = Math.max(0, Math.min(newOrder, siblings.length - 1));
+          if (fromIndex === toIndex) return state;
+          const reordered = [...siblings];
+          const [removed] = reordered.splice(fromIndex, 1);
+          reordered.splice(toIndex, 0, removed);
+          const orderMap = new Map(reordered.map((t, i) => [t.id, i]));
+          return {
+            tasks: state.tasks.map((t) =>
+              orderMap.has(t.id) ? { ...t, order: orderMap.get(t.id)! } : t
+            ),
+          };
+        }),
       addSessionLog: () => {},
       updateSessionLog: () => {},
       deleteSessionLog: () => {},
