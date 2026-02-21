@@ -127,7 +127,17 @@ export const useStore = create<AppState>()(
           sessionLogs: state.sessionLogs.filter((log) => log.taskId !== id),
           activeTimers: state.activeTimers.filter((t) => t.taskId !== id),
         })),
-      archiveTask: () => {},
+      archiveTask: (id) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === id);
+          if (!task) return state;
+          return {
+            tasks: state.tasks.map((t) =>
+              t.id === id ? { ...t, status: 'archived' as const } : t
+            ),
+            activeTimers: state.activeTimers.filter((t) => t.taskId !== id),
+          };
+        }),
       restoreTask: () => {},
       reorderTask: () => {},
       addSessionLog: () => {},
