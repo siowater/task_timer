@@ -9,6 +9,7 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
+import { getCategoriesByParentId } from '@/store/selectors';
 import type { Category } from '@/types';
 
 interface CategoryListProps {
@@ -16,15 +17,11 @@ interface CategoryListProps {
   parentId: string | null;
 }
 
-function sortByOrder<T extends { order: number }>(items: T[]): T[] {
-  return [...items].sort((a, b) => a.order - b.order);
-}
-
 export function CategoryList({ parentId }: CategoryListProps) {
   const router = useRouter();
   const iconColor = useThemeColor({}, 'text');
   const categories = useStore((state) =>
-    sortByOrder(state.categories.filter((c) => c.parentId === parentId))
+    getCategoriesByParentId(state.categories, parentId)
   );
 
   const handlePress = (category: Category) => {

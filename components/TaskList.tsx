@@ -8,6 +8,7 @@ import { StyleSheet } from 'react-native';
 
 import { Text, View } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
+import { getTasksByParentId } from '@/store/selectors';
 import type { Task } from '@/types';
 
 interface TaskListProps {
@@ -15,13 +16,9 @@ interface TaskListProps {
   parentId: string | null;
 }
 
-function sortByOrder<T extends { order: number }>(items: T[]): T[] {
-  return [...items].sort((a, b) => a.order - b.order);
-}
-
 export function TaskList({ parentId }: TaskListProps) {
   const tasks = useStore((state) =>
-    sortByOrder(state.tasks.filter((t) => t.parentId === parentId))
+    getTasksByParentId(state.tasks, parentId)
   );
 
   const activeTasks = tasks.filter((t) => t.status === 'active');
