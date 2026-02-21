@@ -6,6 +6,7 @@
 jest.mock('@/storage/mmkv');
 
 import { useStore } from '../useStore';
+import { MAX_ACTIVE_TASKS } from '@/constants/app';
 
 function resetStore() {
   useStore.setState({
@@ -65,5 +66,62 @@ describe('archiveTask', () => {
 
     const { tasks } = useStore.getState();
     expect(tasks[0].status).toBe('archived');
+  });
+});
+
+describe('restoreTask', () => {
+  it('archived タスクを active に復元する', () => {
+    useStore.getState().addTask({ name: '復元対象', parentId: null });
+    const taskId = useStore.getState().tasks[0].id;
+    useStore.setState((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === taskId ? { ...t, status: 'archived' as const } : t
+      ),
+    }));
+
+    useStore.getState().restoreTask(taskId);
+
+    const { tasks } = useStore.getState();
+    expect(tasks[0].status).toBe('active');
+  });
+
+  it('アクティブタスク20個の場合は復元しない', () => {
+    for (let i = 0; i < MAX_ACTIVE_TASKS; i++) {
+      useStore.getState().addTask({ name: `タスク${i}`, parentId: null });
+    }
+    const lastTask = useStore.getState().tasks[MAX_ACTIVE_TASKS - 1];
+    useStore.setState((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === lastTask.id ? { ...t, status: 'archived' as const } : t
+      ),
+    }));
+    useStore.setState((state) => ({
+      tasks: [
+        ...state.tasks,
+        {
+          id: 'extra-active',
+          name: '追加アクティブ',
+          parentId: null,
+          order: MAX_ACTIVE_TASKS,
+          status: 'active' as const,
+        },
+      ],
+    }));
+    const archivedTaskId = lastTask.id;
+    expect(useStore.getState().tasks.filter((t) => t.status === 'active')).toHaveLength(
+      MAX_ACTIVE_TASKS
+    );
+
+    useStore.getState().restoreTask(archivedTaskId);
+
+    const { tasks } = useStore.getState();
+    const task = tasks.find((t) => t.id === archivedTaskId);
+    expect(task?.status).toBe('archived');
+  });
+
+  it('存在しないIDでもエラーにならない', () => {
+    expect(() => {
+      useStore.getState().restoreTask('non-existent-id');
+    }).not.toThrow();
   });
 });

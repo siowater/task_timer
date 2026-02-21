@@ -138,7 +138,18 @@ export const useStore = create<AppState>()(
             activeTimers: state.activeTimers.filter((t) => t.taskId !== id),
           };
         }),
-      restoreTask: () => {},
+      restoreTask: (id) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === id);
+          if (!task || task.status !== 'archived') return state;
+          const activeCount = state.tasks.filter((t) => t.status === 'active').length;
+          if (activeCount >= MAX_ACTIVE_TASKS) return state;
+          return {
+            tasks: state.tasks.map((t) =>
+              t.id === id ? { ...t, status: 'active' as const } : t
+            ),
+          };
+        }),
       reorderTask: () => {},
       addSessionLog: () => {},
       updateSessionLog: () => {},
