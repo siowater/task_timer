@@ -1,10 +1,12 @@
 /**
  * カテゴリー画面（Level 1〜4）
- * 子カテゴリー・タスク一覧を表示
+ * 子カテゴリー・タスク一覧を表示。戻るで親階層へ遷移。
  * @see docs/screen-list.md
+ * @see T-011-4 (#50)
  */
 
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLayoutEffect } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { AddCategoryButton } from '@/components/AddCategoryButton';
@@ -16,6 +18,7 @@ import { useStore } from '@/store/useStore';
 
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
   const parentId = id ?? null;
   const category = useStore((state) =>
     parentId ? state.categories.find((c) => c.id === parentId) : null
@@ -24,11 +27,15 @@ export default function CategoryScreen() {
     ? (Math.min(category.level + 1, 4) as 1 | 2 | 3 | 4)
     : 1;
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: category?.name ?? 'カテゴリー',
+      headerBackTitle: '戻る',
+    });
+  }, [navigation, category?.name]);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {category && (
-        <Text style={styles.title}>{category.name}</Text>
-      )}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>カテゴリー</Text>
         <CategoryList parentId={parentId} />
@@ -50,11 +57,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 32,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
   },
   section: {
     marginBottom: 24,
