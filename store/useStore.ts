@@ -174,7 +174,19 @@ export const useStore = create<AppState>()(
       addSessionLog: () => {},
       updateSessionLog: () => {},
       deleteSessionLog: () => {},
-      startTimer: () => {},
+      startTimer: (taskId) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (!task || task.status !== 'active') return state;
+          const startTime = new Date().toISOString();
+          const existing = state.activeTimers.find((t) => t.taskId === taskId);
+          const newTimers = existing
+            ? state.activeTimers.map((t) =>
+                t.taskId === taskId ? { taskId, startTime } : t
+              )
+            : [...state.activeTimers, { taskId, startTime }];
+          return { activeTimers: newTimers };
+        }),
       stopTimer: () => {},
     }),
     {
