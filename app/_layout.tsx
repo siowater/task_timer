@@ -2,6 +2,7 @@
  * ルートレイアウト
  * @see docs/screen-list.md
  * @see T-024-1 (#87) Toast 導入
+ * @see T-025-1 (#82) GestureHandlerRootView（D&D 用）
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -10,6 +11,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ToastManager from 'expo-react-native-toastify';
 import 'react-native-reanimated';
 
@@ -56,8 +58,9 @@ function RootLayoutNav() {
   useAppResumeTimers();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
         <Stack.Screen
           name="(tabs)"
           options={{
@@ -86,8 +89,9 @@ function RootLayoutNav() {
             title: '履歴を編集',
           }}
         />
-      </Stack>
-      <ToastManager />
-    </ThemeProvider>
+        </Stack>
+        <ToastManager />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
