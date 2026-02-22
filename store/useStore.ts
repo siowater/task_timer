@@ -31,7 +31,8 @@ export interface AppState {
   updateSessionLog: (id: string, updates: Partial<SessionLog>) => void;
   deleteSessionLog: (id: string) => void;
   startTimer: (taskId: string) => void;
-  stopTimer: (taskId: string) => void;
+  /** 戻り値: success=停止成功, capped=24時間超で丸めた（Toast表示用） */
+  stopTimer: (taskId: string) => { success: boolean; capped: boolean };
 }
 
 const PERSISTED_KEYS = ['categories', 'tasks', 'sessionLogs', 'activeTimers'] as const;
@@ -188,7 +189,8 @@ export const useStore = create<AppState>()(
             : [...state.activeTimers, { taskId, startTime }];
           return { activeTimers: newTimers };
         }),
-      stopTimer: (taskId) =>
+      stopTimer: (taskId) => {
+        const result = { success: false, capped: false };
         set((state) => {
           const timer = state.activeTimers.find((t) => t.taskId === taskId);
           if (!timer) return state;
@@ -200,6 +202,7 @@ export const useStore = create<AppState>()(
           const elapsedMs = end.getTime() - start.getTime();
           const maxMs = MAX_SESSION_HOURS * 60 * 60 * 1000;
           if (elapsedMs > maxMs) {
+            result.capped = true;
             const cappedEnd = new Date(start.getTime() + maxMs);
             endTime = cappedEnd.toISOString();
           }
@@ -220,11 +223,14 @@ export const useStore = create<AppState>()(
             createdAt: new Date().toISOString(),
           }));
 
+          result.success = true;
           return {
             activeTimers: state.activeTimers.filter((t) => t.taskId !== taskId),
             sessionLogs: [...state.sessionLogs, ...newLogs],
           };
-        }),
+        });
+        return result;
+      },
     }),
     {
       name: 'task-timer-store',

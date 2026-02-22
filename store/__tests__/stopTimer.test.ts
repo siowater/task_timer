@@ -1,6 +1,7 @@
 /**
  * stopTimer アクションの単体テスト
  * @see T-017-2 (#69)
+ * @see T-017-3 (#72) 24時間上限・Toast条件
  */
 
 jest.mock('@/storage/mmkv');
@@ -70,12 +71,43 @@ describe('stopTimer', () => {
     jest.useRealTimers();
   });
 
+  it('24時間超えた場合、stopTimer は capped: true を返す（Toast表示用）', () => {
+    jest.useFakeTimers();
+    useStore.getState().addTask({ name: 'タスク', parentId: null });
+    const taskId = useStore.getState().tasks[0].id;
+
+    useStore.getState().startTimer(taskId);
+    jest.advanceTimersByTime(25 * 60 * 60 * 1000); // 25時間後
+    const result = useStore.getState().stopTimer(taskId);
+
+    expect(result.success).toBe(true);
+    expect(result.capped).toBe(true);
+    jest.useRealTimers();
+  });
+
+  it('24時間以内の場合、stopTimer は capped: false を返す', () => {
+    jest.useFakeTimers();
+    useStore.getState().addTask({ name: 'タスク', parentId: null });
+    const taskId = useStore.getState().tasks[0].id;
+
+    useStore.getState().startTimer(taskId);
+    jest.advanceTimersByTime(60 * 60 * 1000); // 1時間後
+    const result = useStore.getState().stopTimer(taskId);
+
+    expect(result.success).toBe(true);
+    expect(result.capped).toBe(false);
+    jest.useRealTimers();
+  });
+
+
   it('計測中のタスクでない場合は何もしない', () => {
     useStore.getState().addTask({ name: 'タスク', parentId: null });
     const taskId = useStore.getState().tasks[0].id;
 
-    useStore.getState().stopTimer(taskId);
+    const result = useStore.getState().stopTimer(taskId);
 
+    expect(result.success).toBe(false);
+    expect(result.capped).toBe(false);
     const { activeTimers, sessionLogs } = useStore.getState();
     expect(activeTimers).toHaveLength(0);
     expect(sessionLogs).toHaveLength(0);
