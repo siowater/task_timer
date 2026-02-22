@@ -17,6 +17,7 @@ import {
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
 import { getTodayDateString } from '@/utils/dateHelpers';
+import { showErrorToast } from '@/utils/toast';
 
 export default function ManualEntryModal() {
   const router = useRouter();
@@ -43,7 +44,9 @@ export default function ManualEntryModal() {
     setError(null);
     const selectedTaskId = taskId || tasks[0]?.id;
     if (!selectedTaskId) {
-      setError('タスクを選択してください');
+      const msg = 'タスクを選択してください';
+      setError(msg);
+      showErrorToast(msg);
       return;
     }
     const result = addSessionLog({
@@ -56,7 +59,9 @@ export default function ManualEntryModal() {
     if (result.success) {
       router.back();
     } else {
-      setError(result.error ?? '入力に誤りがあります');
+      const msg = result.error ?? '入力に誤りがあります';
+      setError(msg);
+      showErrorToast(msg);
     }
   };
 

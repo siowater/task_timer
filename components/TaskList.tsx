@@ -15,6 +15,7 @@ import { getTasksByParentId } from '@/store/selectors';
 import type { Task } from '@/types';
 import { useElapsedTime } from '@/hooks/useElapsedTime';
 import { formatElapsedSeconds } from '@/utils/formatElapsed';
+import { showInfoToast } from '@/utils/toast';
 
 interface TaskListProps {
   /** 親カテゴリーID。null の場合はルート直下 */
@@ -96,7 +97,12 @@ function TaskItem({ task, archived, onRestore, onDelete }: TaskItemProps) {
   const isTiming = !!activeTimer;
 
   const handleStart = () => startTimer(task.id);
-  const handleStop = () => stopTimer(task.id);
+  const handleStop = () => {
+    const result = stopTimer(task.id);
+    if (result.capped) {
+      showInfoToast('24時間を超えたため、24時間で記録しました');
+    }
+  };
 
   return (
     <View style={[styles.item, archived && styles.itemArchived]}>

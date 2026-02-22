@@ -1,6 +1,7 @@
 /**
  * ルートレイアウト
  * @see docs/screen-list.md
+ * @see T-024-1 (#87) Toast 導入
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -9,6 +10,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -85,6 +87,7 @@ function RootLayoutNav() {
           }}
         />
       </Stack>
+      <Toast />
     </ThemeProvider>
   );
 }

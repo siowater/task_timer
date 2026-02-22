@@ -15,6 +15,7 @@ import {
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
+import { showErrorToast } from '@/utils/toast';
 
 export default function EditSessionModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,7 +66,9 @@ export default function EditSessionModal() {
     setError(null);
     const selectedTaskId = taskId || log.taskId;
     if (!selectedTaskId) {
-      setError('タスクを選択してください');
+      const msg = 'タスクを選択してください';
+      setError(msg);
+      showErrorToast(msg);
       return;
     }
     const result = updateSessionLog(id!, {
@@ -78,7 +81,9 @@ export default function EditSessionModal() {
     if (result.success) {
       router.back();
     } else {
-      setError(result.error ?? '入力に誤りがあります');
+      const msg = result.error ?? '入力に誤りがあります';
+      setError(msg);
+      showErrorToast(msg);
     }
   };
 
