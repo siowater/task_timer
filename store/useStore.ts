@@ -11,7 +11,11 @@ import type { Category, Task, SessionLog, ActiveTimer } from '@/types';
 import { zustandStorage } from '@/storage/mmkv';
 import { MAX_ACTIVE_TASKS, MAX_CATEGORY_LEVEL, MAX_SESSION_HOURS } from '@/constants/app';
 import { generateId } from '@/utils/id';
-import { splitSessionByMidnight } from '@/utils/splitSessionByMidnight';
+import {
+  splitSessionByMidnight,
+  splitSessionByLocalMidnight,
+} from '@/utils/splitSessionByMidnight';
+import { validateManualSession } from '@/utils/validateManualSession';
 
 export interface AppState {
   categories: Category[];
@@ -27,7 +31,13 @@ export interface AppState {
   archiveTask: (id: string) => void;
   restoreTask: (id: string) => void;
   reorderTask: (id: string, newOrder: number) => void;
-  addSessionLog: (log: Omit<SessionLog, 'id' | 'createdAt'>) => void;
+  /** 手動入力用。日またぎ分割対応。戻り値: success, error（バリデーション失敗時） */
+  addSessionLog: (params: {
+    taskId: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+  }) => { success: boolean; error?: string };
   updateSessionLog: (id: string, updates: Partial<SessionLog>) => void;
   deleteSessionLog: (id: string) => void;
   startTimer: (taskId: string) => void;
@@ -175,7 +185,53 @@ export const useStore = create<AppState>()(
             ),
           };
         }),
-      addSessionLog: () => {},
+      addSessionLog: (params) => {
+        const error = validateManualSession(params);
+        if (error) return { success: false, error };
+
+        const { taskId, date, startTime, endTime } = params;
+        const startParsed = /^(\d{1,2}):(\d{2})$/.exec(startTime);
+        const endParsed = /^(\d{1,2}):(\d{2})$/.exec(endTime);
+        if (!startParsed || !endParsed) return { success: false, error: '時刻形式が不正です' };
+
+        const endH = parseInt(endParsed[1], 10);
+        const startH = parseInt(startParsed[1], 10);
+        const endM = parseInt(endParsed[2], 10);
+        const startM = parseInt(startParsed[2], 10);
+        const endIsNextDay =
+          endH < startH || (endH === startH && endM <= startM);
+        const endDateStr = endIsNextDay
+          ? (() => {
+              const d = new Date(date + 'T12:00:00');
+              d.setDate(d.getDate() + 1);
+              return d.toISOString().slice(0, 10);
+            })()
+          : date;
+
+        const startDate = new Date(`${date}T${startTime}:00`);
+        const endDate = new Date(`${endDateStr}T${endTime}:00`);
+
+        const segments = splitSessionByLocalMidnight({
+          taskId,
+          start: startDate,
+          end: endDate,
+        });
+
+        const newLogs: SessionLog[] = segments.map((seg) => ({
+          id: generateId(),
+          taskId: seg.taskId,
+          date: seg.date,
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+          durationMinutes: seg.durationMinutes,
+          createdAt: new Date().toISOString(),
+        }));
+
+        set((state) => ({
+          sessionLogs: [...state.sessionLogs, ...newLogs],
+        }));
+        return { success: true };
+      },
       updateSessionLog: () => {},
       deleteSessionLog: () => {},
       startTimer: (taskId) =>

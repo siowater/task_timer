@@ -74,7 +74,7 @@ function RootLayoutNav() {
           name="modal"
           options={{
             presentation: 'modal',
-            title: 'Modal',
+            title: '手動入力',
           }}
         />
       </Stack>

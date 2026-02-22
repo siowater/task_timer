@@ -91,3 +91,73 @@ export function splitSessionByMidnight(params: {
 
   return segments;
 }
+
+function toDateStringLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function toTimeStringLocal(d: Date): string {
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * セッションをローカル日付で分割する。手動入力用。
+ * start/end は Date オブジェクト（ローカル）。
+ */
+export function splitSessionByLocalMidnight(params: {
+  taskId: string;
+  start: Date;
+  end: Date;
+}): SessionLogSegment[] {
+  const { taskId, start, end } = params;
+  const startDateStr = toDateStringLocal(start);
+  const endDateStr = toDateStringLocal(end);
+
+  if (startDateStr === endDateStr) {
+    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    return [
+      {
+        taskId,
+        date: startDateStr,
+        startTime: toTimeStringLocal(start),
+        endTime: toTimeStringLocal(end),
+        durationMinutes,
+      },
+    ];
+  }
+
+  const segments: SessionLogSegment[] = [];
+  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+
+  while (toDateStringLocal(current) <= endDateStr) {
+    const dateStr = toDateStringLocal(current);
+    const dayStart = new Date(current);
+    const dayEnd = new Date(current);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const segmentStart = start > dayStart ? start : dayStart;
+    const segmentEnd = end < dayEnd ? end : dayEnd;
+
+    if (segmentStart < segmentEnd) {
+      const durationMinutes = Math.round(
+        (segmentEnd.getTime() - segmentStart.getTime()) / 60000
+      );
+      segments.push({
+        taskId,
+        date: dateStr,
+        startTime: toTimeStringLocal(segmentStart),
+        endTime: toTimeStringLocal(segmentEnd),
+        durationMinutes,
+      });
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return segments;
+}

@@ -3,7 +3,10 @@
  * @see T-018-2 (#68)
  */
 
-import { splitSessionByMidnight } from '../splitSessionByMidnight';
+import {
+  splitSessionByMidnight,
+  splitSessionByLocalMidnight,
+} from '../splitSessionByMidnight';
 
 describe('splitSessionByMidnight', () => {
   it('同日の場合は1レコードを返す', () => {
@@ -70,5 +73,32 @@ describe('splitSessionByMidnight', () => {
 
     const total = result.reduce((sum, r) => sum + r.durationMinutes, 0);
     expect(total).toBe(360);
+  });
+});
+
+describe('splitSessionByLocalMidnight', () => {
+  it('同日の場合は1レコードを返す', () => {
+    const result = splitSessionByLocalMidnight({
+      taskId: 'task-1',
+      start: new Date('2026-02-21T09:00:00'),
+      end: new Date('2026-02-21T12:00:00'),
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].date).toBe('2026-02-21');
+    expect(result[0].durationMinutes).toBe(180);
+  });
+
+  it('0時跨ぎの場合は2レコードに分割する', () => {
+    const result = splitSessionByLocalMidnight({
+      taskId: 'task-1',
+      start: new Date('2026-02-21T23:00:00'),
+      end: new Date('2026-02-22T01:00:00'),
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0].date).toBe('2026-02-21');
+    expect(result[1].date).toBe('2026-02-22');
+    expect(result[0].durationMinutes + result[1].durationMinutes).toBe(120);
   });
 });
