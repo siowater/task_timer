@@ -3,8 +3,12 @@
  * @see T-011-2 (#54)
  */
 
-import { getCategoriesByParentId, getTasksByParentId } from '../selectors';
-import type { Category, Task } from '@/types';
+import {
+  getCategoriesByParentId,
+  getTasksByParentId,
+  getSessionLogsByDate,
+} from '../selectors';
+import type { Category, Task, SessionLog } from '@/types';
 
 describe('getCategoriesByParentId', () => {
   const categories: Category[] = [
@@ -86,5 +90,68 @@ describe('getTasksByParentId', () => {
     const result = getTasksByParentId(unsorted, null);
     expect(result.map((t) => t.order)).toEqual([0, 1, 2]);
     expect(result.map((t) => t.name)).toEqual(['B', 'C', 'A']);
+  });
+});
+
+describe('getSessionLogsByDate', () => {
+  const logs: SessionLog[] = [
+    {
+      id: '1',
+      taskId: 't1',
+      date: '2025-02-21',
+      startTime: '09:00',
+      endTime: '10:30',
+      durationMinutes: 90,
+      createdAt: '2025-02-21T10:30:00Z',
+    },
+    {
+      id: '2',
+      taskId: 't2',
+      date: '2025-02-21',
+      startTime: '09:00',
+      endTime: '09:30',
+      durationMinutes: 30,
+      createdAt: '2025-02-21T09:30:00Z',
+    },
+    {
+      id: '3',
+      taskId: 't1',
+      date: '2025-02-20',
+      startTime: '14:00',
+      endTime: '15:00',
+      durationMinutes: 60,
+      createdAt: '2025-02-20T15:00:00Z',
+    },
+    {
+      id: '4',
+      taskId: 't3',
+      date: '2025-02-19',
+      startTime: '10:00',
+      endTime: '11:00',
+      durationMinutes: 60,
+      createdAt: '2025-02-19T11:00:00Z',
+    },
+  ];
+
+  it('指定日付のログのみ返す', () => {
+    const result = getSessionLogsByDate(logs, ['2025-02-21']);
+    expect(result).toHaveLength(2);
+    expect(result.every((l) => l.date === '2025-02-21')).toBe(true);
+  });
+
+  it('複数日付のログを返す', () => {
+    const result = getSessionLogsByDate(logs, ['2025-02-21', '2025-02-20']);
+    expect(result).toHaveLength(3);
+  });
+
+  it('日付降順でソート', () => {
+    const result = getSessionLogsByDate(logs, ['2025-02-21', '2025-02-20']);
+    expect(result[0].date).toBe('2025-02-21');
+    expect(result[result.length - 1].date).toBe('2025-02-20');
+  });
+
+  it('該当なしの場合は空配列', () => {
+    const result = getSessionLogsByDate(logs, ['2025-02-25']);
+    expect(result).toHaveLength(0);
   });
 });
