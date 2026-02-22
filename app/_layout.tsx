@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import Toast from 'react-native-toast-message';
+import ToastManager from 'expo-react-native-toastify';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -87,7 +87,7 @@ function RootLayoutNav() {
           }}
         />
       </Stack>
-      <Toast />
+      <ToastManager />
     </ThemeProvider>
   );
 }
