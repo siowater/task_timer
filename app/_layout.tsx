@@ -77,6 +77,13 @@ function RootLayoutNav() {
             title: '手動入力',
           }}
         />
+        <Stack.Screen
+          name="edit-session/[id]"
+          options={{
+            presentation: 'modal',
+            title: '履歴を編集',
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );

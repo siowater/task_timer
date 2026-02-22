@@ -38,7 +38,10 @@ export interface AppState {
     startTime: string;
     endTime: string;
   }) => { success: boolean; error?: string };
-  updateSessionLog: (id: string, updates: Partial<SessionLog>) => void;
+  updateSessionLog: (
+    id: string,
+    updates: Partial<SessionLog>
+  ) => { success: boolean; error?: string };
   deleteSessionLog: (id: string) => void;
   startTimer: (taskId: string) => void;
   /** 戻り値: success=停止成功, capped=24時間超で丸めた（Toast表示用） */
@@ -232,8 +235,69 @@ export const useStore = create<AppState>()(
         }));
         return { success: true };
       },
-      updateSessionLog: () => {},
-      deleteSessionLog: () => {},
+      updateSessionLog: (id, updates) => {
+        const result = { success: false as boolean, error: undefined as string | undefined };
+        set((state) => {
+          const log = state.sessionLogs.find((l) => l.id === id);
+          if (!log) return state;
+
+          const merged = { ...log, ...updates };
+
+          if (
+            updates.date !== undefined ||
+            updates.startTime !== undefined ||
+            updates.endTime !== undefined
+          ) {
+            const date = merged.date;
+            const startTime = merged.startTime;
+            const endTime = merged.endTime;
+            const err = validateManualSession({
+              taskId: merged.taskId,
+              date,
+              startTime,
+              endTime,
+            });
+            if (err) {
+              result.error = err;
+              return state;
+            }
+
+            const startDate = new Date(`${date}T${startTime}:00`);
+            let endDateStr = date;
+            const endParsed = /^(\d{1,2}):(\d{2})$/.exec(endTime);
+            const startParsed = /^(\d{1,2}):(\d{2})$/.exec(startTime);
+            if (endParsed && startParsed) {
+              const endH = parseInt(endParsed[1], 10);
+              const startH = parseInt(startParsed[1], 10);
+              const endM = parseInt(endParsed[2], 10);
+              const startM = parseInt(startParsed[2], 10);
+              const endIsNextDay =
+                endH < startH || (endH === startH && endM <= startM);
+              if (endIsNextDay) {
+                const d = new Date(date + 'T12:00:00');
+                d.setDate(d.getDate() + 1);
+                endDateStr = d.toISOString().slice(0, 10);
+              }
+            }
+            const endDate = new Date(`${endDateStr}T${endTime}:00`);
+            merged.durationMinutes = Math.round(
+              (endDate.getTime() - startDate.getTime()) / 60000
+            );
+          }
+
+          result.success = true;
+          return {
+            sessionLogs: state.sessionLogs.map((l) =>
+              l.id === id ? merged : l
+            ),
+          };
+        });
+        return result;
+      },
+      deleteSessionLog: (id) =>
+        set((state) => ({
+          sessionLogs: state.sessionLogs.filter((l) => l.id !== id),
+        })),
       startTimer: (taskId) =>
         set((state) => {
           const task = state.tasks.find((t) => t.id === taskId);

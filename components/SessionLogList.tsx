@@ -1,12 +1,14 @@
 /**
  * セッションログ一覧コンポーネント
- * 今日・今週の稼働表示
- * @see T-021-2 (#79), T-021-3 (#71)
+ * 今日・今週の稼働表示・編集・削除
+ * @see T-021-2 (#79), T-021-3 (#71), T-023-3 (#84)
  */
 
-import { StyleSheet } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
+import { Alert, Pressable, StyleSheet } from 'react-native';
 
-import { Text, View } from '@/components/Themed';
+import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
 import { getSessionLogsByDate } from '@/store/selectors';
 import type { SessionLog } from '@/types';
@@ -64,13 +66,48 @@ function SessionLogItem({
   log: SessionLog;
   taskName: string;
 }) {
+  const router = useRouter();
+  const tintColor = useThemeColor({}, 'tint');
+  const deleteSessionLog = useStore((state) => state.deleteSessionLog);
+
+  const handleDelete = () => {
+    Alert.alert(
+      '削除の確認',
+      'この記録を削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: () => deleteSessionLog(log.id),
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.item} lightColor="#fff" darkColor="#2a2a2a">
-      <Text style={styles.taskName}>{taskName}</Text>
-      <Text style={styles.timeRange}>
-        {log.date} {log.startTime} - {log.endTime}
-      </Text>
-      <Text style={styles.duration}>{log.durationMinutes}分</Text>
+      <View style={styles.itemContent}>
+        <Text style={styles.taskName}>{taskName}</Text>
+        <Text style={styles.timeRange}>
+          {log.date} {log.startTime} - {log.endTime}
+        </Text>
+        <Text style={styles.duration}>{log.durationMinutes}分</Text>
+      </View>
+      <View style={styles.itemActions}>
+        <Pressable
+          onPress={() => router.push(`/edit-session/${log.id}`)}
+          style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+        >
+          <FontAwesome name="pencil" size={16} color={tintColor} />
+        </Pressable>
+        <Pressable
+          onPress={handleDelete}
+          style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+        >
+          <FontAwesome name="trash-o" size={16} color="#e53935" />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -105,6 +142,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 6,
+  },
+  itemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   taskName: {
     flex: 1,
