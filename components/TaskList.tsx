@@ -7,11 +7,8 @@
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
 import { Alert, Pressable, StyleSheet } from 'react-native';
+import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
@@ -48,43 +45,39 @@ export function TaskList({ parentId }: TaskListProps) {
     );
   };
 
-  const handleActiveDragEnd = ({ data, to }: { data: Task[]; to: number }) => {
-    if (to >= 0 && to < data.length) {
-      reorderTask(data[to].id, to);
+  const handleActiveReordered = (fromIndex: number, toIndex: number) => {
+    if (fromIndex >= 0 && fromIndex < activeTasks.length && toIndex >= 0 && toIndex < activeTasks.length) {
+      reorderTask(activeTasks[fromIndex].id, toIndex);
     }
   };
 
-  const handleArchivedDragEnd = ({ data, to }: { data: Task[]; to: number }) => {
-    if (to >= 0 && to < data.length) {
-      reorderTask(data[to].id, activeTasks.length + to);
+  const handleArchivedReordered = (fromIndex: number, toIndex: number) => {
+    if (fromIndex >= 0 && fromIndex < archivedTasks.length && toIndex >= 0 && toIndex < archivedTasks.length) {
+      reorderTask(archivedTasks[fromIndex].id, activeTasks.length + toIndex);
     }
   };
 
-  const renderActiveItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
-    <ScaleDecorator>
-      <View style={[styles.dragRow, isActive && styles.dragRowActive]}>
-        <Pressable onLongPress={drag} style={styles.dragHandle}>
-          <FontAwesome name="bars" size={14} color="#999" />
-        </Pressable>
-        <TaskItem task={item} archived={false} />
-      </View>
-    </ScaleDecorator>
+  const renderActiveItem = ({ item, onDragStart, onDragEnd, isActive }: DragListRenderItemInfo<Task>) => (
+    <View style={[styles.dragRow, isActive && styles.dragRowActive]}>
+      <Pressable onPressIn={onDragStart} onPressOut={onDragEnd} style={styles.dragHandle}>
+        <FontAwesome name="bars" size={14} color="#999" />
+      </Pressable>
+      <TaskItem task={item} archived={false} />
+    </View>
   );
 
-  const renderArchivedItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
-    <ScaleDecorator>
-      <View style={[styles.dragRow, isActive && styles.dragRowActive]}>
-        <Pressable onLongPress={drag} style={styles.dragHandle}>
-          <FontAwesome name="bars" size={14} color="#999" />
-        </Pressable>
-        <TaskItem
-          task={item}
-          archived={true}
-          onRestore={() => restoreTask(item.id)}
-          onDelete={() => handleDelete(item)}
-        />
-      </View>
-    </ScaleDecorator>
+  const renderArchivedItem = ({ item, onDragStart, onDragEnd, isActive }: DragListRenderItemInfo<Task>) => (
+    <View style={[styles.dragRow, isActive && styles.dragRowActive]}>
+      <Pressable onPressIn={onDragStart} onPressOut={onDragEnd} style={styles.dragHandle}>
+        <FontAwesome name="bars" size={14} color="#999" />
+      </Pressable>
+      <TaskItem
+        task={item}
+        archived={true}
+        onRestore={() => restoreTask(item.id)}
+        onDelete={() => handleDelete(item)}
+      />
+    </View>
   );
 
   if (tasks.length === 0) {
@@ -97,26 +90,24 @@ export function TaskList({ parentId }: TaskListProps) {
 
   return (
     <View style={styles.list}>
-      <DraggableFlatList
+      <DragList
         data={activeTasks}
         keyExtractor={(item) => item.id}
         renderItem={renderActiveItem}
-        onDragEnd={handleActiveDragEnd}
-        scrollEnabled={false}
-        containerStyle={styles.dragList}
+        onReordered={handleActiveReordered}
+        style={styles.dragList}
       />
       {archivedTasks.length > 0 && (
         <>
           <View style={styles.archivedHeader}>
             <Text style={styles.archivedHeaderText}>完了済み</Text>
           </View>
-          <DraggableFlatList
+          <DragList
             data={archivedTasks}
             keyExtractor={(item) => item.id}
             renderItem={renderArchivedItem}
-            onDragEnd={handleArchivedDragEnd}
-            scrollEnabled={false}
-            containerStyle={styles.dragList}
+            onReordered={handleArchivedReordered}
+            style={styles.dragList}
           />
         </>
       )}

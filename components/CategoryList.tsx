@@ -6,11 +6,8 @@
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
 import { Pressable, StyleSheet } from 'react-native';
+import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useStore } from '@/store/useStore';
@@ -34,33 +31,26 @@ export function CategoryList({ parentId }: CategoryListProps) {
     router.push(`/category/${category.id}`);
   };
 
-  const handleDragEnd = ({ data, to }: { data: Category[]; to: number }) => {
-    if (to >= 0 && to < data.length) {
-      reorderCategory(data[to].id, to);
+  const onReordered = (fromIndex: number, toIndex: number) => {
+    if (fromIndex >= 0 && fromIndex < categories.length && toIndex >= 0 && toIndex < categories.length) {
+      reorderCategory(categories[fromIndex].id, toIndex);
     }
   };
 
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<Category>) => (
-    <ScaleDecorator>
-      <Pressable
-        onLongPress={drag}
-        disabled={isActive}
-        style={({ pressed }) => [
-          styles.item,
-          (pressed || isActive) && styles.itemPressed,
-        ]}
-      >
-        <FontAwesome name="bars" size={16} color={iconColor} style={styles.dragHandle} />
-        <Pressable
-          onPress={() => handlePress(item)}
-          style={styles.itemContent}
-        >
-          <FontAwesome name="folder" size={18} color={iconColor} style={styles.icon} />
-          <Text style={styles.itemText}>{item.name}</Text>
-          <FontAwesome name="chevron-right" size={14} color={iconColor} style={styles.chevron} />
-        </Pressable>
+  const renderItem = ({ item, onDragStart, onDragEnd, isActive }: DragListRenderItemInfo<Category>) => (
+    <View style={[styles.item, isActive && styles.itemPressed]}>
+      <Pressable onPressIn={onDragStart} onPressOut={onDragEnd} style={styles.dragHandle}>
+        <FontAwesome name="bars" size={16} color={iconColor} />
       </Pressable>
-    </ScaleDecorator>
+      <Pressable
+        onPress={() => handlePress(item)}
+        style={({ pressed }) => [styles.itemContent, pressed && styles.itemPressed]}
+      >
+        <FontAwesome name="folder" size={18} color={iconColor} style={styles.icon} />
+        <Text style={styles.itemText}>{item.name}</Text>
+        <FontAwesome name="chevron-right" size={14} color={iconColor} style={styles.chevron} />
+      </Pressable>
+    </View>
   );
 
   if (categories.length === 0) {
@@ -72,13 +62,12 @@ export function CategoryList({ parentId }: CategoryListProps) {
   }
 
   return (
-    <DraggableFlatList
+    <DragList
       data={categories}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
-      onDragEnd={handleDragEnd}
-      containerStyle={styles.list}
-      scrollEnabled={false}
+      onReordered={onReordered}
+      style={styles.list}
     />
   );
 }
