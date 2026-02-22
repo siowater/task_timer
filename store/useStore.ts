@@ -9,8 +9,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Category, Task, SessionLog, ActiveTimer } from '@/types';
 import { zustandStorage } from '@/storage/mmkv';
-import { MAX_ACTIVE_TASKS, MAX_CATEGORY_LEVEL } from '@/constants/app';
+import { MAX_ACTIVE_TASKS, MAX_CATEGORY_LEVEL, MAX_SESSION_HOURS } from '@/constants/app';
 import { generateId } from '@/utils/id';
+import { splitSessionByMidnight } from '@/utils/splitSessionByMidnight';
 
 export interface AppState {
   categories: Category[];
@@ -187,7 +188,43 @@ export const useStore = create<AppState>()(
             : [...state.activeTimers, { taskId, startTime }];
           return { activeTimers: newTimers };
         }),
-      stopTimer: () => {},
+      stopTimer: (taskId) =>
+        set((state) => {
+          const timer = state.activeTimers.find((t) => t.taskId === taskId);
+          if (!timer) return state;
+
+          const start = new Date(timer.startTime);
+          const end = new Date();
+          let endTime = end.toISOString();
+
+          const elapsedMs = end.getTime() - start.getTime();
+          const maxMs = MAX_SESSION_HOURS * 60 * 60 * 1000;
+          if (elapsedMs > maxMs) {
+            const cappedEnd = new Date(start.getTime() + maxMs);
+            endTime = cappedEnd.toISOString();
+          }
+
+          const segments = splitSessionByMidnight({
+            taskId,
+            startTime: timer.startTime,
+            endTime,
+          });
+
+          const newLogs: SessionLog[] = segments.map((seg) => ({
+            id: generateId(),
+            taskId: seg.taskId,
+            date: seg.date,
+            startTime: seg.startTime,
+            endTime: seg.endTime,
+            durationMinutes: seg.durationMinutes,
+            createdAt: new Date().toISOString(),
+          }));
+
+          return {
+            activeTimers: state.activeTimers.filter((t) => t.taskId !== taskId),
+            sessionLogs: [...state.sessionLogs, ...newLogs],
+          };
+        }),
     }),
     {
       name: 'task-timer-store',
