@@ -33,6 +33,8 @@ export interface AppState {
   startTimer: (taskId: string) => void;
   /** 戻り値: success=停止成功, capped=24時間超で丸めた（Toast表示用） */
   stopTimer: (taskId: string) => { success: boolean; capped: boolean };
+  /** アプリ復帰時に全アクティブタイマーを処理（経過計算→ログ記録→クリア） */
+  processResumeTimers: () => { processed: number; cappedCount: number };
 }
 
 const PERSISTED_KEYS = ['categories', 'tasks', 'sessionLogs', 'activeTimers'] as const;
@@ -226,6 +228,53 @@ export const useStore = create<AppState>()(
           result.success = true;
           return {
             activeTimers: state.activeTimers.filter((t) => t.taskId !== taskId),
+            sessionLogs: [...state.sessionLogs, ...newLogs],
+          };
+        });
+        return result;
+      },
+      processResumeTimers: () => {
+        const result = { processed: 0, cappedCount: 0 };
+        set((state) => {
+          if (state.activeTimers.length === 0) return state;
+
+          const end = new Date();
+          const maxMs = MAX_SESSION_HOURS * 60 * 60 * 1000;
+          const newLogs: SessionLog[] = [];
+
+          for (const timer of state.activeTimers) {
+            const start = new Date(timer.startTime);
+            let endTime = end.toISOString();
+
+            const elapsedMs = end.getTime() - start.getTime();
+            if (elapsedMs > maxMs) {
+              result.cappedCount += 1;
+              const cappedEnd = new Date(start.getTime() + maxMs);
+              endTime = cappedEnd.toISOString();
+            }
+
+            const segments = splitSessionByMidnight({
+              taskId: timer.taskId,
+              startTime: timer.startTime,
+              endTime,
+            });
+
+            for (const seg of segments) {
+              newLogs.push({
+                id: generateId(),
+                taskId: seg.taskId,
+                date: seg.date,
+                startTime: seg.startTime,
+                endTime: seg.endTime,
+                durationMinutes: seg.durationMinutes,
+                createdAt: new Date().toISOString(),
+              });
+            }
+            result.processed += 1;
+          }
+
+          return {
+            activeTimers: [],
             sessionLogs: [...state.sessionLogs, ...newLogs],
           };
         });
