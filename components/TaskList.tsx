@@ -7,7 +7,7 @@
  */
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Alert, Pressable, StyleSheet } from 'react-native';
+import { Alert, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
@@ -96,6 +96,7 @@ export function TaskList({ parentId }: TaskListProps) {
         renderItem={renderActiveItem}
         onReordered={handleActiveReordered}
         style={styles.dragList}
+        scrollEnabled={false}
       />
       {archivedTasks.length > 0 && (
         <>
@@ -108,6 +109,7 @@ export function TaskList({ parentId }: TaskListProps) {
             renderItem={renderArchivedItem}
             onReordered={handleArchivedReordered}
             style={styles.dragList}
+            scrollEnabled={false}
           />
         </>
       )}
@@ -143,9 +145,20 @@ function TaskItem({ task, archived, onRestore, onDelete }: TaskItemProps) {
     }
   };
 
+  const handleRowPress = () => {
+    if (!archived && !isTiming) {
+      handleStart();
+    }
+  };
+
   return (
     <View style={[styles.item, archived && styles.itemArchived]}>
-      <View style={styles.itemMain}>
+      <TouchableOpacity
+        onPress={handleRowPress}
+        style={styles.itemMain}
+        disabled={archived}
+        activeOpacity={0.6}
+      >
         <Text
           style={[styles.itemText, archived && styles.itemTextArchived]}
           lightColor={archived ? '#888' : undefined}
@@ -158,7 +171,7 @@ function TaskItem({ task, archived, onRestore, onDelete }: TaskItemProps) {
             {formatElapsedSeconds(elapsedSeconds)}
           </Text>
         )}
-      </View>
+      </TouchableOpacity>
       {!archived && (
         <View style={styles.actions}>
           {isTiming ? (

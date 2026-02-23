@@ -5,7 +5,7 @@
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { NameInputModal } from '@/components/NameInputModal';
 import { Text, View, useThemeColor } from '@/components/Themed';
@@ -33,13 +33,14 @@ export function AddCategoryButton({ parentId, level }: AddCategoryButtonProps) {
 
   return (
     <>
-      <Pressable
+      <TouchableOpacity
         onPress={() => setModalVisible(true)}
-        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+        style={styles.button}
+        activeOpacity={0.6}
       >
         <FontAwesome name="plus-circle" size={20} color={tintColor} style={styles.icon} />
         <Text style={styles.buttonText}>カテゴリーを追加</Text>
-      </Pressable>
+      </TouchableOpacity>
       <NameInputModal
         visible={modalVisible}
         title="新規カテゴリー"
@@ -58,9 +59,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginTop: 8,
-  },
-  buttonPressed: {
-    opacity: 0.6,
   },
   icon: {
     marginRight: 8,

@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Next.js (web/)
+web/.next/
+web/out/
+
 # Expo
 .expo/
 dist/

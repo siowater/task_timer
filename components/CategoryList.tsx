@@ -6,7 +6,7 @@
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity } from 'react-native';
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
@@ -27,10 +27,6 @@ export function CategoryList({ parentId }: CategoryListProps) {
   );
   const reorderCategory = useStore((state) => state.reorderCategory);
 
-  const handlePress = (category: Category) => {
-    router.push(`/category/${category.id}`);
-  };
-
   const onReordered = (fromIndex: number, toIndex: number) => {
     if (fromIndex >= 0 && fromIndex < categories.length && toIndex >= 0 && toIndex < categories.length) {
       reorderCategory(categories[fromIndex].id, toIndex);
@@ -42,14 +38,15 @@ export function CategoryList({ parentId }: CategoryListProps) {
       <Pressable onPressIn={onDragStart} onPressOut={onDragEnd} style={styles.dragHandle}>
         <FontAwesome name="bars" size={16} color={iconColor} />
       </Pressable>
-      <Pressable
-        onPress={() => handlePress(item)}
-        style={({ pressed }) => [styles.itemContent, pressed && styles.itemPressed]}
+      <TouchableOpacity
+        onPress={() => router.push(`/category/${item.id}`)}
+        style={styles.itemContent}
+        activeOpacity={0.6}
       >
         <FontAwesome name="folder" size={18} color={iconColor} style={styles.icon} />
         <Text style={styles.itemText}>{item.name}</Text>
         <FontAwesome name="chevron-right" size={14} color={iconColor} style={styles.chevron} />
-      </Pressable>
+      </TouchableOpacity>
     </View>
   );
 
@@ -68,6 +65,7 @@ export function CategoryList({ parentId }: CategoryListProps) {
       renderItem={renderItem}
       onReordered={onReordered}
       style={styles.list}
+      scrollEnabled={false}
     />
   );
 }
