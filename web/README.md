@@ -7,6 +7,11 @@ Next.js ベースの Web アプリ。Issue #97 に基づく Expo からの移行
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS
+- Supabase
+
+## 環境変数
+
+`web/.env.example` をコピーして `web/.env.local` を作成し、Supabase の URL とキーを設定してください。
 
 ## 起動方法
 
