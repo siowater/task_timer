@@ -19,7 +19,7 @@ Issue #95, #96, #97 に基づく大規模リニューアルのタスク一覧。
 | W-001 | Next.js プロジェクト作成 | create-next-app（App Router, TypeScript, Tailwind） | [#98](https://github.com/siowater/task_timer/issues/98) ✅ |
 | W-002 | Supabase プロジェクト設定 | プロジェクト作成・接続・環境変数 | [#100](https://github.com/siowater/task_timer/issues/100) ✅ |
 | W-003 | データモデル定義 | タスク・セッションログ・アクティブタイマー（カテゴリーなし） | [#99](https://github.com/siowater/task_timer/issues/99) ✅ |
-| W-004 | 最小起動確認 | 開発サーバー起動・画面表示確認 | [#101](https://github.com/siowater/task_timer/issues/101) |
+| W-004 | 最小起動確認 | 開発サーバー起動・画面表示確認 | [#101](https://github.com/siowater/task_timer/issues/101) ✅ |
 
 ### Phase 2: タスク・タイマー機能 (#96 反映)
 

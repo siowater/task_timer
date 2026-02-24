@@ -24,7 +24,7 @@
 
 | フェーズ | 状態 | 備考 |
 |----------|------|------|
-| Phase 1: Web 基盤 | 🔄 進行中 | W-001〜W-003 完了 (#98, #100, #99)、W-004 未着手 |
+| Phase 1: Web 基盤 | ✅ 完了 | W-001〜W-004 完了 |
 | Phase 2: タスク・タイマー | ⬜ 未着手 | W-005〜W-009 (#102〜#107) |
 | Phase 3: 稼働履歴 | ⬜ 未着手 | W-010〜W-013 (#108, #110, #112, #106) |
 | Phase 4: レイアウト・UI | ⬜ 未着手 | W-014〜W-015 (#109, #111) |
@@ -130,6 +130,7 @@
 | W-001 Next.js プロジェクト作成 (#98) | 2026-02-23 |
 | W-002 Supabase プロジェクト設定 (#100) | 2026-02-23 |
 | W-003 データモデル定義 (#99) | 2026-02-23 |
+| W-004 最小起動確認 (#101) | 2026-02-24 |
 
 ---
 
@@ -154,3 +155,4 @@
 - 2026-02-23: W-001 完了。Next.js プロジェクトを web/ に作成（App Router, TypeScript, Tailwind）。npm run web:dev で起動可能。
 - 2026-02-23: W-002 完了。Supabase プロジェクト作成（task-timer, ap-northeast-1）。@supabase/supabase-js, @supabase/ssr 導入。lib/supabase/client.ts, server.ts 作成。接続確認済み。
 - 2026-02-23: W-003 完了。型定義（Task, SessionLog, ActiveTimer）、定数、docs/web-data-structure.md、Supabase テーブル（tasks, session_logs）作成。
+- 2026-02-24: W-004 完了。npm run web:dev 起動確認、ビルド成功確認。Phase 1 完了。

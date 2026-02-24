@@ -30,3 +30,9 @@ cd web && npm run dev
 ```bash
 npm run web:build
 ```
+
+## 起動確認（W-004）
+
+- `npm run web:dev` で開発サーバーが起動する
+- http://localhost:3000 で初期画面（Task Timer + Supabase 接続表示）が表示される
+- `npm run web:build` でビルドが成功する
